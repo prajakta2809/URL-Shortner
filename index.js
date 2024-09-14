@@ -5,7 +5,8 @@ const URL = require("./model/url")
 const app = express();
 const PORT =8001;
 const path = require('path')
-
+const cookieParser = require('cookie-parser');
+const {restrictToLoggedinUseronly, checkAuth} = require('./middlewares/auth');
 
 const staticRouter = require("./routes/staticRouter")
 const userRoute= require('./routes/user')
@@ -17,12 +18,14 @@ connectToMongoDB("mongodb://localhost:27017/short-url")
 app.set("view engine", "ejs")
 app.set('views',path.resolve("./views"))
 app.use(express.urlencoded({extended:false}))
+app.use(cookieParser());
+
 
 app.use(express.json())
 
-app.use("/url",urlRoute);
+app.use("/url",restrictToLoggedinUseronly,urlRoute);
 app.use("/user",userRoute);
-app.use("/",staticRouter);   //any router starts with / we will use this router
+app.use("/",checkAuth,staticRouter);   //any router starts with / we will use this router
 
 app.get('/url/:shortId',async(req,res)=>{
     const shortId = req.params.shortId;
